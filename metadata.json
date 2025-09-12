@@ -1,0 +1,5 @@
+{
+  "name": "Gestor de Gastos de Subvenciones",
+  "description": "Una aplicación para automatizar la revisión y categorización de recibos de compra para la gestión de subvenciones del ayuntamiento. Sube recibos y las bases de la subvención para que la IA clasifique los gastos y sugiera su elegibilidad.",
+  "requestFramePermissions": []
+}
