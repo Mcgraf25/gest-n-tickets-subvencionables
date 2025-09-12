@@ -88,7 +88,7 @@ export const EligibilityView: React.FC<EligibilityViewProps> = ({ items, onEligi
                            <EditIcon /> <span className="ml-2">Editar Reglas</span>
                         </button>
                         <input type="file" ref={fileInputRef} onChange={handleFileChange} accept=".txt,.md" className="hidden" />
-                         <button onClick={handleImportClick} className="flex-1 flex items-center justify-center text-sm bg-white hover:bg-slate-100 border border-slate-300 text-slate-700 font-bold py-2 px-3 rounded-lg transition duration-300">
+                        <button onClick={handleImportClick} className="flex-1 flex items-center justify-center text-sm bg-white hover:bg-slate-100 border border-slate-300 text-slate-700 font-bold py-2 px-3 rounded-lg transition duration-300">
                            <ImportIcon /> <span className="ml-2">Importar</span>
                         </button>
                     </div>
@@ -117,7 +117,7 @@ export const EligibilityView: React.FC<EligibilityViewProps> = ({ items, onEligi
                     </div>
 
                     <div className="p-5 rounded-xl border-2 border-primary/20 bg-white">
-                         <h3 className="font-bold text-dark">Revisar Gasto</h3>
+                        <h3 className="font-bold text-dark">Revisar Gasto</h3>
                         <p className="text-sm text-slate-500 mb-4">Toma una decisión final sobre el gasto seleccionado.</p>
                         
                         {!selectedItem ? <div className="flex items-center justify-center h-4/5"><p className="text-center text-slate-500">Selecciona un gasto de la lista para revisarlo.</p></div> : (
@@ -133,10 +133,10 @@ export const EligibilityView: React.FC<EligibilityViewProps> = ({ items, onEligi
                                     </button>
                                 </div>
                                 <div className="bg-slate-50 p-3 rounded-lg border border-slate-200">
-                                     <h4 className="text-sm font-semibold mb-1 text-slate-600">Sugerencia de la IA</h4>
-                                     <p className={`text-sm font-bold ${selectedItem.eligibilitySuggestion === 'Subvencionable' ? 'text-green-700' : selectedItem.eligibilitySuggestion === 'No Subvencionable' ? 'text-red-700' : 'text-yellow-700'}`}>
+                                    <h4 className="text-sm font-semibold mb-1 text-slate-600">Sugerencia de la IA</h4>
+                                    <p className={`text-sm font-bold ${selectedItem.eligibilitySuggestion === 'Subvencionable' ? 'text-green-700' : selectedItem.eligibilitySuggestion === 'No Subvencionable' ? 'text-red-700' : 'text-yellow-700'}`}>
                                         {selectedItem.eligibilitySuggestion}
-                                     </p>
+                                    </p>
                                 </div>
                                 <DecisionForm key={selectedItem.id} item={selectedItem} onConfirm={handleConfirmDecision} />
                             </div>
@@ -184,9 +184,9 @@ const DecisionForm: React.FC<DecisionFormProps> = ({ item, onConfirm }) => {
             </div>
             <div className="flex space-x-2">
                  <button onClick={handleSubmit} disabled={decision === 'Dudoso'} className="w-full bg-primary text-white font-bold py-2 px-3 rounded-lg hover:bg-indigo-700 transition duration-300 disabled:bg-slate-400 disabled:cursor-not-allowed">
-                    Confirmar Decisión
-                </button>
+                     Confirmar Decisión
+                 </button>
             </div>
-        </>
+        </div>
     );
 };
