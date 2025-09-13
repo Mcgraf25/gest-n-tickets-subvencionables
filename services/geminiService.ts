@@ -2,32 +2,72 @@
 import { getGenAI, isAIAvailable } from "../genai";
 import type { ExtractedReceipt } from "../types";
 
-export { isAIAvailable }; // lo usaremos en App para saber si mostrar aviso o no
+export { isAIAvailable };
 
 /**
  * Procesa un ticket con la API de Gemini si está disponible.
- * Si no hay clave, devuelve null en lugar de romper la app.
+ * Si no hay clave o falla el SDK, devuelve null (no rompe la app).
  */
 export async function extractReceiptInfo(
   base64Content: string,
   mimeType: string,
   guidelines: string
 ): Promise<ExtractedReceipt | null> {
-  const genai = getGenAI();
+  const genai = await getGenAI();
   if (!genai) {
-    console.warn("⚠️ Gemini desactivado: no hay API key. extractReceiptInfo -> null");
+    console.warn("⚠️ Gemini desactivado o no inicializado. extractReceiptInfo -> null");
     return null;
   }
 
   try {
-    const model = genai.getGenerativeModel({ model: "gemini-1.5-flash" });
+    // Intentamos la API clásica:
+    if (typeof genai.getGenerativeModel === "function") {
+      const model = genai.getGenerativeModel({ model: "gemini-1.5-flash" });
+      const res = await model.generateContent([
+        { text: buildPrompt(guidelines) },
+        { inlineData: { data: base64Content, mimeType } },
+      ]);
 
-    const prompt = `
+      const text = typeof res?.response?.text === "function"
+        ? res.response.text()
+        : (res?.response?.candidates?.[0]?.content?.parts?.map((p: any) => p.text).join("") ?? "");
+
+      const jsonStr = pickJson(text);
+      const data = JSON.parse(jsonStr);
+      if (!data || !Array.isArray(data.items)) throw new Error("Formato inesperado");
+      return data as ExtractedReceipt;
+    }
+
+    // Intentamos APIs alternativas (por si el SDK expone métodos distintos):
+    if (genai?.responses?.generate) {
+      const res = await genai.responses.generate({
+        model: "gemini-1.5-flash",
+        input: [
+          { role: "user", content: [{ text: buildPrompt(guidelines) }, { inlineData: { data: base64Content, mimeType } }] }
+        ]
+      });
+      const text = res?.output_text || res?.response?.text?.() || "";
+      const jsonStr = pickJson(text);
+      const data = JSON.parse(jsonStr);
+      if (!data || !Array.isArray(data.items)) throw new Error("Formato inesperado");
+      return data as ExtractedReceipt;
+    }
+
+    console.warn("SDK de Gemini sin método conocido para generar contenido.");
+    return null;
+  } catch (err) {
+    console.error("❌ Error en extractReceiptInfo:", err);
+    return null;
+  }
+}
+
+function buildPrompt(guidelines: string) {
+  return `
 Eres un asistente que extrae información estructurada de tickets/recibos.
 Devuélveme SOLO un JSON válido con este esquema:
 {
   "storeName": string,
-  "transactionDate": string,     // ISO o 'YYYY-MM-DD'
+  "transactionDate": string,
   "total": number,
   "items": [
     {
@@ -42,28 +82,10 @@ Devuélveme SOLO un JSON válido con este esquema:
 
 Ten en cuenta estas reglas internas:
 ${guidelines}
-`;
+`.trim();
+}
 
-    const res = await model.generateContent([
-      { text: prompt },
-      { inlineData: { data: base64Content, mimeType } },
-    ]);
-
-    const text = res.response.text();
-
-    // Si la IA devuelve texto con más cosas, intenta quedarte con el JSON
-    const jsonMatch = text.match(/\{[\s\S]*\}$/);
-    const jsonStr = jsonMatch ? jsonMatch[0] : text;
-
-    const data = JSON.parse(jsonStr);
-
-    if (!data || !Array.isArray(data.items)) {
-      throw new Error("La respuesta de IA no tiene el formato esperado");
-    }
-
-    return data as ExtractedReceipt;
-  } catch (err) {
-    console.error("❌ Error en extractReceiptInfo:", err);
-    return null;
-  }
+function pickJson(text: string): string {
+  const m = text?.match(/\{[\s\S]*\}$/);
+  return m ? m[0] : text;
 }
